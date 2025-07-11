@@ -1,3 +1,4 @@
+// eslint.config.js
 import js from '@eslint/js'
 import globals from 'globals'
 import pluginVue from 'eslint-plugin-vue'
@@ -18,69 +19,61 @@ export default defineConfigWithVueTs(
     // ignores: []
   },
 
+  // Quasar recommandé
   pluginQuasar.configs.recommended(),
+
+  // ESLint de base JS
   js.configs.recommended,
 
-  /**
-   * https://eslint.vuejs.org
-   *
-   * pluginVue.configs.base
-   *   -> Settings and rules to enable correct ESLint parsing.
-   * pluginVue.configs[ 'flat/essential']
-   *   -> base, plus rules to prevent errors or unintended behavior.
-   * pluginVue.configs["flat/strongly-recommended"]
-   *   -> Above, plus rules to considerably improve code readability and/or dev experience.
-   * pluginVue.configs["flat/recommended"]
-   *   -> Above, plus rules to enforce subjective community defaults to ensure consistency.
-   */
-  pluginVue.configs[ 'flat/essential' ],
+  // Vue - strict minimal
+  pluginVue.configs['flat/essential'],
 
+  // TypeScript strict avec type-check
+  vueTsConfigs.recommendedTypeChecked,
+
+  // Prettier sans conflit
+  prettierSkipFormatting,
+
+  // Règles personnalisées globales
+  {
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        process: 'readonly',
+        ga: 'readonly',
+        cordova: 'readonly',
+        Capacitor: 'readonly',
+        chrome: 'readonly',
+        browser: 'readonly'
+      }
+    },
+    rules: {
+      'prefer-promise-reject-errors': 'off',
+      'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
+    }
+  },
+
+  // Règles spécifiques TypeScript/Vue
   {
     files: ['**/*.ts', '**/*.vue'],
     rules: {
       '@typescript-eslint/consistent-type-imports': [
         'error',
         { prefer: 'type-imports' }
-      ],
-    }
-  },
-  // https://github.com/vuejs/eslint-config-typescript
-  vueTsConfigs.recommendedTypeChecked,
-
-  {
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-
-      globals: {
-        ...globals.browser,
-        ...globals.node, // SSR, Electron, config files
-        process: 'readonly', // process.env.*
-        ga: 'readonly', // Google Analytics
-        cordova: 'readonly',
-        Capacitor: 'readonly',
-        chrome: 'readonly', // BEX related
-        browser: 'readonly' // BEX related
-      }
-    },
-
-    // add your custom rules here
-    rules: {
-      'prefer-promise-reject-errors': 'off',
-
-      // allow debugger during development only
-      'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
+      ]
     }
   },
 
+  // Pour les service workers PWA
   {
-    files: [ 'src-pwa/custom-service-worker.ts' ],
+    files: ['src-pwa/custom-service-worker.ts'],
     languageOptions: {
       globals: {
         ...globals.serviceworker
       }
     }
-  },
-
-  prettierSkipFormatting
+  }
 )
