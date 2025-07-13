@@ -12,16 +12,65 @@
     <q-page-container>
       <router-view />
     </q-page-container>
+
     <q-footer>
-      <q-tabs>
-        <q-route-tab name="User" to="user" icon="mail"></q-route-tab>
-        <q-route-tab name="Import" to="/" icon="alarm"></q-route-tab>
-        <q-route-tab name="Import" to="error" icon="movie"></q-route-tab>
+      <q-tabs
+        v-model="activeTab"
+        class="text-white bg-primary"
+        active-color="white"
+        indicator-color="white"
+        align="justify"
+      >
+        <q-route-tab
+          name="user"
+          to="/user"
+          icon="person"
+          label="Profile"
+        />
+        <q-route-tab
+          name="index"
+          to="/index"
+          icon="camera"
+          label="Accueil"
+        />
+        <q-route-tab
+          name="error"
+          to="/error"
+          icon="error"
+          label="Erreur"
+        />
       </q-tabs>
     </q-footer>
   </q-layout>
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
+const route = useRoute();
+const activeTab = ref('home');
+
+// Mettre à jour l'onglet actif en fonction de la route
+const updateActiveTab = () => {
+  const path = route.path;
+
+  if (path === '/') {
+    activeTab.value = 'home';
+  } else if (path === '/user') {
+    activeTab.value = 'user';
+  } else if (path === '/error') {
+    activeTab.value = 'error';
+  }
+};
+
+// Initialiser et observer les changements de route
+updateActiveTab();
+watch(() => route.path, updateActiveTab);
 </script>
+
+<style scoped>
+.q-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+</style>
