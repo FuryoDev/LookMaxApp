@@ -15,4 +15,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-
+firebase:
+  service-account-file: ${FIREBASE_SERVICE_ACCOUNT_FILE:firebase-service-account.json}
+  service-account-key: ${FIREBASE_SERVICE_ACCOUNT_KEY:}
+  project-id: ${FIREBASE_PROJECT_ID:votre-projet-id}
