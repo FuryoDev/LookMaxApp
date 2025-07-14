@@ -14,7 +14,8 @@ export default defineConfig((ctx) => {
     // https://v2.quasar.dev/quasar-cli-vite/boot-files
     boot: [
       'i18n',
-      'axios'
+      'axios',
+      'firebase'
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
@@ -186,7 +187,7 @@ export default defineConfig((ctx) => {
       // extendElectronMainConf (esbuildConf) {},
       // extendElectronPreloadConf (esbuildConf) {},
 
-      // extendPackageJson (json) {},
+      // extendPaquackageJson (json) {},
 
       // Electron preload scripts (if any) from /src-electron, WITHOUT file extension
       preloadScripts: [ 'electron-preload' ],

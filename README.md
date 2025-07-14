@@ -1,40 +1,16 @@
-# LookMax App (lookmaxapp)
+# LookMax Project
 
-A Quasar Project
+Application complète avec frontend Quasar et backend Spring Boot.
 
-## Install the dependencies
+## Structure du projet
+
+- `frontend/` - Application Quasar/Vue.js
+- `backend/` - API Spring Boot
+
+## Développement
+
+### Frontend
 ```bash
-yarn
-# or
+cd frontend
 npm install
-```
-
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
-```bash
-quasar dev
-```
-
-
-### Lint the files
-```bash
-yarn lint
-# or
-npm run lint
-```
-
-
-### Format the files
-```bash
-yarn format
-# or
-npm run format
-```
-
-
-### Build the app for production
-```bash
-quasar build
-```
-
-### Customize the configuration
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
+npm run dev
