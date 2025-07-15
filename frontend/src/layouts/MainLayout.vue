@@ -39,6 +39,12 @@
           icon="error"
           label="Erreur"
         />
+        <q-route-tab
+          name="firebase"
+          to="/firebase"
+          icon="fire"
+          label="Firebase"
+        />
       </q-tabs>
     </q-footer>
   </q-layout>

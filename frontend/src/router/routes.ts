@@ -16,6 +16,9 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'error', component: () => import('pages/ErrorNotFound.vue')
+      },
+      {
+        path: 'firebase', component: () => import('pages/FirebaseTest.vue')
       }
     ]
   },
