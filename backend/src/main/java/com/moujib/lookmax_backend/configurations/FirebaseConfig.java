@@ -1,4 +1,4 @@
-package com.yourpackage.config;
+package com.moujib.lookmax_backend.configurations;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;

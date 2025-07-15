@@ -12,7 +12,7 @@ const message = ref('');
 
 onMounted(async () => {
   try {
-    const response = await backendAPI.get('/main');
+    const response = await backendAPI.get('/api/main');
     message.value = response.data;
   } catch (error) {
     message.value = 'Erreur lors de l’appel API';

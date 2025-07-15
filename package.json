@@ -8,14 +8,33 @@
     "dev:backend:windows": "cd backend && mvnw.cmd spring-boot:run",
     "dev:backend:unix": "cd backend && ./mvnw spring-boot:run",
     "dev:backend": "npm run dev:backend:windows",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    
+    "dev": "concurrently --kill-others --kill-others-on-fail \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:safe": "concurrently --kill-others --kill-others-on-fail --prefix=\"[{name}]\" --prefix-colors=\"cyan.bold,yellow.bold\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+    
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && ./mvnw clean package",
     "build": "npm run build:frontend && npm run build:backend",
+    
+    "clean:ports": "npx kill-port 8080 3000 9000",
+    "clean:frontend": "cd frontend && npm run clean 2>/dev/null || true",
+    "clean:backend": "cd backend && ./mvnw clean",
+    "clean": "npm run clean:ports && npm run clean:frontend && npm run clean:backend",
+    
+    "predev": "npm run clean:ports",
+    "prebuild": "npm run clean",
+    
     "install:frontend": "cd frontend && npm install",
-    "install:backend": "cd backend && ./mvnw dependency:resolve"
+    "install:backend": "cd backend && ./mvnw dependency:resolve",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    
+    "dev:watch": "concurrently --kill-others --kill-others-on-fail --restart-tries=3 \"npm run dev:frontend\" \"npm run dev:backend\"",
+    
+    "start:frontend": "npm run clean:ports && npm run dev:frontend",
+    "start:backend": "npm run clean:ports && npm run dev:backend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "kill-port": "^2.0.1"
   }
 }
