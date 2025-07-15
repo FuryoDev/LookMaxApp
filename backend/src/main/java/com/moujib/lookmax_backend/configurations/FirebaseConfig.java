@@ -26,6 +26,8 @@ public class FirebaseConfig {
     @PostConstruct
     public void initialize() throws IOException {
         if (FirebaseApp.getApps().isEmpty()) {
+            System.out.println("🔧 Initializing Firebase Admin SDK...");
+
             GoogleCredentials credentials = getCredentials();
 
             FirebaseOptions options = FirebaseOptions.builder()
@@ -34,12 +36,17 @@ public class FirebaseConfig {
 
             FirebaseApp.initializeApp(options);
             System.out.println("✅ Firebase Admin SDK initialized successfully");
+        } else {
+            System.out.println("ℹ️ Firebase Admin SDK already initialized");
         }
     }
 
     private GoogleCredentials getCredentials() throws IOException {
+        System.out.println("🔍 Looking for Firebase credentials...");
+
         // Priorité 1: Variable d'environnement (production)
         if (serviceAccountKey != null && !serviceAccountKey.isEmpty()) {
+            System.out.println("📝 Using service account key from environment variable");
             InputStream stream = new ByteArrayInputStream(
                     serviceAccountKey.getBytes(StandardCharsets.UTF_8)
             );
@@ -49,10 +56,12 @@ public class FirebaseConfig {
         // Priorité 2: Fichier dans resources (développement)
         Resource resource = new ClassPathResource(serviceAccountFile);
         if (resource.exists()) {
+            System.out.println("📁 Using service account file: " + serviceAccountFile);
             return GoogleCredentials.fromStream(resource.getInputStream());
         }
 
         // Priorité 3: Credentials par défaut de l'environnement
+        System.out.println("🌍 Using default application credentials");
         return GoogleCredentials.getApplicationDefault();
     }
 }
