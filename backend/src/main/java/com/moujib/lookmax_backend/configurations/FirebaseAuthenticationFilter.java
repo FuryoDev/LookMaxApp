@@ -8,6 +8,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -15,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+@Configuration
 public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
@@ -24,16 +26,11 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        System.out.println("🔍 Processing request: " + request.getRequestURI());
-        System.out.println("🔑 Auth header present: " + (authHeader != null));
-
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String idToken = authHeader.substring(7);
-            System.out.println("🎫 Token length: " + idToken.length());
 
             try {
                 FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-                System.out.println("✅ Token verified successfully for user: " + decodedToken.getUid());
 
                 FirebaseUserPrincipal principal = new FirebaseUserPrincipal(
                         decodedToken.getUid(),
@@ -45,15 +42,10 @@ public class FirebaseAuthenticationFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(principal, null, new ArrayList<>());
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                System.out.println("🔐 Authentication set in SecurityContext");
 
             } catch (FirebaseAuthException e) {
-                System.err.println("❌ Firebase token verification failed: " + e.getMessage());
-                System.err.println("Error code: " + e.getErrorCode());
                 logger.warn("Invalid Firebase token: " + e.getMessage());
             }
-        } else {
-            System.out.println("ℹ️ No Bearer token found in Authorization header");
         }
 
         filterChain.doFilter(request, response);
