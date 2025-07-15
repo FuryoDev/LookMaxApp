@@ -1,21 +1,89 @@
+# Configuration du serveur
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Configuration Spring Boot
 spring:
   application:
     name: lookmax-backend
 
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/lookmaxDB
-    username: postgres
-    password: admin1234
-
+  # Configuration JPA/Hibernate
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+    open-in-view: false
 
+  # Configuration de la base de données
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lookmaxDB
+    username: postgres
+    password: admin1234
+    driver-class-name: org.postgresql.Driver
+    
+    # Configuration HikariCP (pool de connexions)
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
+  # Configuration Jackson (JSON)
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Europe/Brussels
+    default-property-inclusion: non_null
+
+  # Configuration des uploads de fichiers
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  # Configuration de sécurité supplémentaire
+  security:
+    filter:
+      order: 5
+
+# Configuration CORS
+cors:
+  allowed-origins: http://localhost:9000,http://localhost:8080,http://localhost:3000,http://127.0.0.1:9000,http://127.0.0.1:8080,http://127.0.0.1:3000
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
+  allowed-headers: "*"
+  exposed-headers: Authorization,Content-Type,X-Total-Count,X-Custom-Header
+  allow-credentials: true
+  max-age: 3600
+
+# Configuration Firebase
 firebase:
-  service-account-file: ${FIREBASE_SERVICE_ACCOUNT_FILE:firebase-service-account.json}
-  service-account-key: ${FIREBASE_SERVICE_ACCOUNT_KEY:}
-  project-id: ${FIREBASE_PROJECT_ID:votre-projet-id}
+  service-account-file: firebase-service-account.json
+  # Pour la production, utilisez une variable d'environnement :
+  # service-account-key: ${FIREBASE_SERVICE_ACCOUNT_KEY:}
+
+# Configuration des logs
+logging:
+  level:
+    root: INFO
+    com.moujib.lookmax_backend: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web.cors: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

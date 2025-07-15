@@ -39,9 +39,6 @@ public class CorsConfig {
         List<String> origins = Arrays.asList(allowedOrigins.split(","));
         configuration.setAllowedOrigins(origins);
 
-        // Si vous voulez permettre tous les origines en développement, utilisez allowedOriginPatterns
-        // configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:*", "http://127.0.0.1:*"));
-
         // Méthodes HTTP autorisées
         configuration.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
 
