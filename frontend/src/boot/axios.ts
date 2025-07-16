@@ -1,5 +1,6 @@
 import { defineBoot } from '#q-app/wrappers';
-import axios, { AxiosError, type AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 import { AuthService } from 'src/services/auth.service';
 
 declare module 'vue' {

@@ -64,14 +64,18 @@ public class MainController {
         return ResponseEntity.ok(response);
     }
 
-    @RequestMapping(value = "/cors-test", method = RequestMethod.OPTIONS)
-    public ResponseEntity<Void> corsTest() {
-        logger.debug("✅ CORS preflight request reçu");
-        return ResponseEntity.ok()
-                .header("Access-Control-Allow-Origin", "*")
-                .header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-                .header("Access-Control-Allow-Headers", "Authorization, Content-Type")
-                .build();
+    @GetMapping(value = "/cors-test")
+    public ResponseEntity<Map<String, Object>> corsTest() {
+        logger.debug("✅ CORS GET request reçu");
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "CORS test endpoint working!");
+        response.put("method", "GET");
+        response.put("cors", "enabled");
+        response.put("timestamp", System.currentTimeMillis());
+        response.put("status", "success");
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/user/profile")
