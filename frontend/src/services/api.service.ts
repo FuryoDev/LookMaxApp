@@ -99,12 +99,12 @@ class ApiService {
     return response.data;
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.post<T>(url, data, config);
     return response.data;
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.api.put<T>(url, data, config);
     return response.data;
   }
@@ -115,23 +115,23 @@ class ApiService {
   }
 
   // Méthodes spécifiques pour votre application
-  async testConnection(): Promise<any> {
+  async testConnection(): Promise<unknown> {
     return this.get('/api/test');
   }
 
-  async getHealth(): Promise<any> {
+  async getHealth(): Promise<unknown> {
     return this.get('/api/health');
   }
 
-  async getMainData(): Promise<any> {
+  async getMainData(): Promise<unknown> {
     return this.get('/api/main');
   }
 
-  async getUserProfile(): Promise<any> {
+  async getUserProfile(): Promise<unknown> {
     return this.get('/api/user/profile');
   }
 
-  async testAuthentication(): Promise<any> {
+  async testAuthentication(): Promise<unknown> {
     return this.post('/api/test-auth');
   }
 }
