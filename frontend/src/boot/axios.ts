@@ -24,7 +24,6 @@ backendAPI.interceptors.request.use(
     const token = await AuthService.getIdToken();
     if(token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log(token);
     }
     return config;
   },

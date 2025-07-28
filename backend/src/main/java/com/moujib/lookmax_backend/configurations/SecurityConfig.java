@@ -17,40 +17,29 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    @Autowired
-    private CorsConfigurationSource corsConfigurationSource;
+    private final CorsConfigurationSource corsConfigurationSource;
 
-    @Autowired
-    private FirebaseAuthenticationFilter firebaseAuthenticationFilter;
+    private final FirebaseAuthenticationFilter firebaseAuthenticationFilter;
+
+    public SecurityConfig(CorsConfigurationSource corsConfigurationSource, FirebaseAuthenticationFilter firebaseAuthenticationFilter) {
+        this.corsConfigurationSource = corsConfigurationSource;
+        this.firebaseAuthenticationFilter = firebaseAuthenticationFilter;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Désactiver CSRF car on utilise des tokens JWT
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // Configuration CORS avec la source personnalisée
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
-
-                // Gestion de session stateless (pas de session côté serveur)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // Configuration des autorisations
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints publics
                         .requestMatchers("/api/health", "/api/test", "/api/cors-test").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/error").permitAll()
-
-                        // Swagger/OpenAPI endpoints si vous les utilisez
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-
-                        // Endpoints qui nécessitent une authentification
                         .requestMatchers("/api/main").authenticated()
                         .requestMatchers("/api/user/**").authenticated()
-
-                        // Tout le reste nécessite une authentification
                         .anyRequest().authenticated()
                 )
 

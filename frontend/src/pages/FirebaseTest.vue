@@ -344,7 +344,6 @@ const testCorsEndpoint = async () => {
     console.log('📡 Response ok:', response.ok);
 
     if (response.ok) {
-      // Vérifier d'abord si la réponse a du contenu
       const contentType = response.headers.get('Content-Type');
       console.log('📡 Content-Type:', contentType);
 
@@ -455,13 +454,11 @@ const getErrorMessage = (error: unknown): string => {
   return 'Unknown error occurred';
 };
 
-// Lifecycle
 onMounted(() => {
   console.log('🔍 Diagnostic réseau prêt');
   console.log('Backend URL:', backendUrl.value);
   console.log('Frontend URL:', window.location.origin);
 
-  // Écouter les changements d'authentification
   AuthService.onAuthStateChanged((authUser) => {
     user.value = authUser;
     console.log('🔐 Auth state changed:', authUser ? authUser.email : 'Non connecté');
