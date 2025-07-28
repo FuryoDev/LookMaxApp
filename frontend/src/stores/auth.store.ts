@@ -1,169 +1,250 @@
-// src/stores/auth.store.ts
-import { ref, computed, readonly } from 'vue';
 import { defineStore } from 'pinia';
-import {
-  onAuthStateChanged,
-  signOut,
-  type User
-} from 'firebase/auth';
-import { auth } from 'src/boot/firebase';
+import { ref, computed } from 'vue';
+import type { User } from 'firebase/auth';
+import { AuthService } from 'src/services/auth.service';
 
-interface UserProfile {
+export interface UserProfile {
   uid: string;
   email: string | null;
   displayName: string | null;
-  photoURL: string | null;
-  emailVerified: boolean;
+  photoURL?: string | null;
+  emailVerified?: boolean;
+  phoneNumber?: string | null;
+  metadata?: {
+    creationTime?: string;
+    lastSignInTime?: string;
+  };
 }
 
-export const useAuthStore = defineStore('auth', () => {
+export const useAuth = defineStore('auth', () => {
   // État
   const user = ref<User | null>(null);
+  const userProfile = ref<UserProfile | null>(null);
   const loading = ref(true);
+  const error = ref<string | null>(null);
   const initialized = ref(false);
 
-  // Getters computed
-  const isAuthenticated = computed(() => !!user.value);
-  const userProfile = computed((): UserProfile | null => {
-    if (!user.value) return null;
-
-    return {
-      uid: user.value.uid,
-      email: user.value.email,
-      displayName: user.value.displayName,
-      photoURL: user.value.photoURL,
-      emailVerified: user.value.emailVerified
-    };
+  // Getters
+  const isAuthenticated = computed(() => {
+    // Vérifier aussi le mode dev
+    const devMode = localStorage.getItem('DEV_MODE_AUTH') === 'true';
+    return !!user.value || devMode;
   });
 
+  const userId = computed(() => user.value?.uid || null);
+
   // Actions
-  const initializeAuth = () => {
-    return new Promise<void>((resolve) => {
-      if (initialized.value) {
-        resolve();
+  const initializeAuth = async () => {
+    console.log('🔄 Initialisation de l\'authentification...');
+    loading.value = true;
+    error.value = null;
+
+    try {
+      // Vérifier le mode dev
+      const devMode = localStorage.getItem('DEV_MODE_AUTH') === 'true';
+
+      if (devMode) {
+        console.log('🛠️ Mode développeur activé');
+        // Créer un profil mock pour le mode dev
+        userProfile.value = {
+          uid: 'dev-user-123',
+          email: 'dev@lookmax.com',
+          displayName: 'Développeur',
+          emailVerified: true
+        };
+        initialized.value = true;
+        loading.value = false;
         return;
       }
 
-      console.log('🔄 Initialisation de l\'authentification...');
+      // Observer les changements d'état d'authentification
+      const unsubscribe = AuthService.onAuthStateChanged((authUser) => {
+        if (authUser) {
+          console.log('✅ Utilisateur authentifié:', authUser.email);
+          user.value = authUser as unknown as User;
 
-      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        console.log('🔐 État d\'authentification changé:', firebaseUser?.email || 'Non connecté');
-
-        user.value = firebaseUser;
-        loading.value = false;
-
-        if (!initialized.value) {
-          initialized.value = true;
-          resolve();
+          // Créer le profil utilisateur
+          userProfile.value = {
+            uid: authUser.uid,
+            email: authUser.email,
+            displayName: authUser.displayName,
+            photoURL: (authUser as any).photoURL || null,
+            emailVerified: (authUser as any).emailVerified || false,
+            phoneNumber: (authUser as any).phoneNumber || null,
+            metadata: {
+              creationTime: (authUser as any).metadata?.creationTime,
+              lastSignInTime: (authUser as any).metadata?.lastSignInTime
+            }
+          };
+        } else {
+          console.log('❌ Aucun utilisateur authentifié');
+          user.value = null;
+          userProfile.value = null;
         }
+
+        initialized.value = true;
+        loading.value = false;
       });
 
-      // Nettoyer l'écouteur si nécessaire (optionnel dans un store)
-      // return unsubscribe;
-    });
+      // Nettoyer l'observer lors de la destruction du store
+      return unsubscribe;
+    } catch (err) {
+      console.error('❌ Erreur d\'initialisation:', err);
+      error.value = err instanceof Error ? err.message : 'Erreur inconnue';
+      loading.value = false;
+      initialized.value = true;
+    }
   };
 
-  const logout = async (): Promise<void> => {
+  const login = async (email: string, password: string) => {
+    console.log('🔐 Tentative de connexion...');
+    loading.value = true;
+    error.value = null;
+
     try {
-      loading.value = true;
-      await signOut(auth);
-      user.value = null;
-      console.log('✅ Déconnexion réussie');
-    } catch (error) {
-      console.error('❌ Erreur lors de la déconnexion:', error);
-      throw error;
+      const authUser = await AuthService.signIn(email, password);
+      console.log('✅ Connexion réussie:', authUser.email);
+      return authUser;
+    } catch (err) {
+      console.error('❌ Erreur de connexion:', err);
+      error.value = err instanceof Error ? err.message : 'Erreur de connexion';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const register = async (email: string, password: string) => {
+    console.log('📝 Tentative d\'inscription...');
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const authUser = await AuthService.signUp(email, password);
+      console.log('✅ Inscription réussie:', authUser.email);
+      return authUser;
+    } catch (err) {
+      console.error('❌ Erreur d\'inscription:', err);
+      error.value = err instanceof Error ? err.message : 'Erreur d\'inscription';
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const logout = async () => {
+    console.log('🚪 Déconnexion...');
+    loading.value = true;
+    error.value = null;
+
+    try {
+      // Vérifier si on est en mode dev
+      const devMode = localStorage.getItem('DEV_MODE_AUTH') === 'true';
+
+      if (devMode) {
+        // En mode dev, juste réinitialiser les données
+        user.value = null;
+        userProfile.value = null;
+        console.log('✅ Déconnexion réussie (mode dev)');
+      } else {
+        await AuthService.signOut();
+        console.log('✅ Déconnexion réussie');
+      }
+    } catch (err) {
+      console.error('❌ Erreur de déconnexion:', err);
+      error.value = err instanceof Error ? err.message : 'Erreur de déconnexion';
+      throw err;
     } finally {
       loading.value = false;
     }
   };
 
   const getIdToken = async (): Promise<string | null> => {
-    if (!user.value) {
-      console.warn('⚠️ Aucun utilisateur connecté pour récupérer le token');
-      return null;
-    }
-
     try {
-      const token = await user.value.getIdToken();
-      console.log('🔑 Token Firebase récupéré');
-      return token;
-    } catch (error) {
-      console.error('❌ Erreur lors de la récupération du token:', error);
+      // En mode dev, retourner un token mock
+      const devMode = localStorage.getItem('DEV_MODE_AUTH') === 'true';
+      if (devMode) {
+        return 'dev-token-123456789';
+      }
+
+      return await AuthService.getIdToken();
+    } catch (err) {
+      console.error('❌ Erreur récupération token:', err);
       return null;
     }
   };
 
-  const refreshToken = async (): Promise<string | null> => {
-    if (!user.value) {
-      console.warn('⚠️ Aucun utilisateur connecté pour rafraîchir le token');
-      return null;
+  const updateProfile = async (updates: Partial<UserProfile>) => {
+    if (!user.value && !localStorage.getItem('DEV_MODE_AUTH')) {
+      throw new Error('Aucun utilisateur connecté');
     }
 
+    loading.value = true;
+    error.value = null;
+
     try {
-      const token = await user.value.getIdToken(true); // Force refresh
-      console.log('🔄 Token Firebase rafraîchi');
-      return token;
-    } catch (error) {
-      console.error('❌ Erreur lors du rafraîchissement du token:', error);
-      return null;
+      // TODO: Implémenter la mise à jour du profil Firebase
+      console.log('📝 Mise à jour du profil:', updates);
+
+      // Mettre à jour le profil local
+      if (userProfile.value) {
+        userProfile.value = {
+          ...userProfile.value,
+          ...updates
+        };
+      }
+    } catch (err) {
+      console.error('❌ Erreur mise à jour profil:', err);
+      error.value = err instanceof Error ? err.message : 'Erreur de mise à jour';
+      throw err;
+    } finally {
+      loading.value = false;
     }
   };
 
-  // Méthode pour vérifier si l'utilisateur a un rôle spécifique
   const hasRole = async (role: string): Promise<boolean> => {
-    if (!user.value) return false;
-
     try {
-      const tokenResult = await user.value.getIdTokenResult();
-      return tokenResult.claims[role] === true;
-    } catch (error) {
-      console.error('❌ Erreur lors de la vérification du rôle:', error);
+      const token = await getIdToken();
+      if (!token) return false;
+
+      // En mode dev, toujours autoriser
+      if (token === 'dev-token-123456789') {
+        return true;
+      }
+
+      // TODO: Implémenter la vérification des rôles via les custom claims Firebase
+      console.log('🔍 Vérification du rôle:', role);
+      return false;
+    } catch (err) {
+      console.error('❌ Erreur vérification rôle:', err);
       return false;
     }
   };
 
-  // Méthode pour obtenir tous les claims personnalisés
-  const getUserClaims = async (): Promise<Record<string, any> | null> => {
-    if (!user.value) return null;
-
-    try {
-      const tokenResult = await user.value.getIdTokenResult();
-      return tokenResult.claims;
-    } catch (error) {
-      console.error('❌ Erreur lors de la récupération des claims:', error);
-      return null;
-    }
+  const clearError = () => {
+    error.value = null;
   };
 
   return {
     // État
-    user: readonly(user),
-    loading: readonly(loading),
-    initialized: readonly(initialized),
+    user,
+    userProfile,
+    loading,
+    error,
+    initialized,
 
     // Getters
     isAuthenticated,
-    userProfile,
+    userId,
 
     // Actions
     initializeAuth,
+    login,
+    register,
     logout,
     getIdToken,
-    refreshToken,
+    updateProfile,
     hasRole,
-    getUserClaims
+    clearError
   };
 });
-
-// Composable pour utiliser facilement l'auth dans les composants
-export const useAuth = () => {
-  const authStore = useAuthStore();
-
-  return {
-    ...authStore,
-    // Raccourcis pratiques
-    user: computed(() => authStore.user),
-    isLoggedIn: computed(() => authStore.isAuthenticated),
-    profile: computed(() => authStore.userProfile)
-  };
-};

@@ -3,22 +3,41 @@ import type { RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
+    redirect: '/auth'
+  },
+  {
+    path: '/auth',
+    component: () => import('pages/AuthPage.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/app',
     component: () => import('layouts/MainLayout.vue'),
+    meta: { requiresAuth: true },
     children: [
       {
-        path: '/', component: () => import('pages/IndexPage.vue')
+        path: '',
+        redirect: '/app/index'
       },
       {
-        path: 'index', component: () => import('pages/IndexPage.vue')
+        path: 'index',
+        component: () => import('pages/IndexPage.vue'),
+        meta: { requiresAuth: true }
       },
       {
-        path: 'user', component: () => import('pages/UserPage.vue')
+        path: 'user',
+        component: () => import('pages/UserPage.vue'),
+        meta: { requiresAuth: true }
       },
       {
-        path: 'error', component: () => import('pages/ErrorNotFound.vue')
+        path: 'firebase',
+        component: () => import('pages/FirebaseTest.vue'),
+        meta: { requiresAuth: true }
       },
       {
-        path: 'firebase', component: () => import('pages/FirebaseTest.vue')
+        path: 'error',
+        component: () => import('pages/ErrorNotFound.vue'),
+        meta: { requiresAuth: false }
       }
     ]
   },
@@ -27,7 +46,8 @@ const routes: RouteRecordRaw[] = [
   // but you can also remove it
   {
     path: '/:catchAll(.*)*',
-    component: () => import('pages/ErrorNotFound.vue')
+    component: () => import('pages/ErrorNotFound.vue'),
+    meta: { requiresAuth: false }
   }
 ];
 

@@ -1,84 +1,127 @@
 <template>
-  <q-layout view="hHh lpR fFf">
-    <q-header elevated>
+  <q-layout view="lHh Lpr lFf">
+    <q-header elevated class="bg-primary">
       <q-toolbar>
-        <!-- Logo/Titre -->
-        <q-toolbar-title class="flex items-center">
-          <q-icon name="camera" size="sm" class="q-mr-sm" />
-          LookMax App
-        </q-toolbar-title>
+        <q-btn
+          flat
+          dense
+          round
+          icon="menu"
+          aria-label="Menu"
+          @click="toggleLeftDrawer"
+        />
 
-        <!-- Informations utilisateur ou bouton de connexion -->
-        <div class="flex items-center q-gutter-sm">
-          <!-- Version Quasar -->
-          <q-chip outline color="white" text-color="white" size="sm">
+        <q-toolbar-title>
+          LookMax
+          <q-chip dense size="sm" color="secondary" text-color="white">
             Quasar v{{ $q.version }}
           </q-chip>
+        </q-toolbar-title>
 
+        <div class="q-gutter-sm row items-center no-wrap">
           <!-- Menu utilisateur si connecté -->
-          <div v-if="isAuthenticated" class="flex items-center q-gutter-sm">
-            <!-- Avatar et menu utilisateur -->
-            <q-btn-dropdown
-              flat
-              round
-              :icon="userProfile?.photoURL ? undefined : 'account_circle'"
-              size="md"
-            >
-              <!-- Avatar personnalisé si disponible -->
-              <template v-if="userProfile?.photoURL" v-slot:label>
-                <q-avatar size="32px">
-                  <img :src="userProfile.photoURL" :alt="userProfile.displayName || 'Avatar'">
-                </q-avatar>
-              </template>
-
-              <!-- Menu déroulant -->
-              <q-list>
-                <q-item clickable v-close-popup @click="goToProfile">
-                  <q-item-section avatar>
-                    <q-icon name="person" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>Mon profil</q-item-label>
-                    <q-item-label caption>{{ userProfile?.email }}</q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-item clickable v-close-popup @click="goToSettings">
-                  <q-item-section avatar>
-                    <q-icon name="settings" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label>Paramètres</q-item-label>
-                  </q-item-section>
-                </q-item>
-
-                <q-separator />
-
-                <q-item clickable v-close-popup @click="handleLogout">
-                  <q-item-section avatar>
-                    <q-icon name="logout" color="negative" />
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label class="text-negative">Se déconnecter</q-item-label>
-                  </q-item-section>
-                </q-item>
-              </q-list>
-            </q-btn-dropdown>
-          </div>
-
-          <!-- Bouton de connexion si non connecté -->
-          <q-btn
-            v-else
+          <q-btn-dropdown
+            v-if="isAuthenticated"
             flat
             no-caps
-            label="Se connecter"
-            icon="login"
-            @click="showAuthDialog = true"
-            class="text-white"
-          />
+            dense
+            class="user-menu"
+          >
+            <template v-slot:label>
+              <div class="row items-center no-wrap">
+                <q-avatar size="32px" class="q-mr-sm">
+                  <img
+                    v-if="userProfile?.photoURL"
+                    :src="userProfile.photoURL"
+                    alt="Avatar"
+                  />
+                  <q-icon
+                    v-else
+                    name="account_circle"
+                    size="32px"
+                  />
+                </q-avatar>
+                <div class="text-weight-medium">{{ displayName }}</div>
+              </div>
+            </template>
+
+            <q-list>
+              <q-item
+                clickable
+                v-close-popup
+                @click="goToProfile"
+              >
+                <q-item-section avatar>
+                  <q-icon name="person" color="primary" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>Mon profil</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-item
+                clickable
+                v-close-popup
+                @click="goToSettings"
+              >
+                <q-item-section avatar>
+                  <q-icon name="settings" color="grey-7" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>Paramètres</q-item-label>
+                </q-item-section>
+              </q-item>
+
+              <q-separator />
+
+              <q-item
+                clickable
+                v-close-popup
+                @click="handleLogout"
+              >
+                <q-item-section avatar>
+                  <q-icon name="logout" color="negative" />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label class="text-negative">Se déconnecter</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-btn-dropdown>
+
+          <!-- Indicateur mode dev si activé -->
+          <q-chip
+            v-if="devMode"
+            color="orange"
+            text-color="white"
+            icon="code"
+            size="sm"
+          >
+            DEV MODE
+          </q-chip>
         </div>
       </q-toolbar>
     </q-header>
+
+    <q-drawer
+      v-model="leftDrawerOpen"
+      show-if-above
+      bordered
+    >
+      <q-list>
+        <q-item-label
+          header
+        >
+          Navigation
+        </q-item-label>
+
+        <EssentialLink
+          v-for="link in essentialLinks"
+          :key="link.title"
+          v-bind="link"
+        />
+      </q-list>
+    </q-drawer>
 
     <q-page-container>
       <router-view />
@@ -95,64 +138,33 @@
       >
         <q-route-tab
           name="index"
-          to="/index"
+          to="/app/index"
           icon="camera"
           label="Accueil"
         />
 
-        <!-- Onglets protégés -->
         <q-route-tab
-          v-if="isAuthenticated"
           name="user"
-          to="/user"
+          to="/app/user"
           icon="person"
-          label="Profile"
+          label="Profil"
         />
 
         <q-route-tab
           name="firebase"
-          to="/firebase"
+          to="/app/firebase"
           icon="whatshot"
           label="Firebase"
         />
 
-        <!-- Onglet d'authentification si non connecté -->
-        <q-tab
-          v-if="!isAuthenticated"
-          name="auth"
-          icon="login"
-          label="Connexion"
-          @click="showAuthDialog = true"
-        />
-
         <q-route-tab
           name="error"
-          to="/error"
+          to="/app/error"
           icon="error"
           label="Test"
         />
       </q-tabs>
     </q-footer>
-
-    <!-- Dialog d'authentification -->
-    <q-dialog v-model="showAuthDialog" persistent>
-      <div style="min-width: 350px;">
-        <FirebaseAuthComponent
-          @auth-success="handleAuthSuccess"
-          @auth-error="handleAuthError"
-        />
-
-        <!-- Bouton pour fermer le dialog -->
-        <div class="text-center q-pa-md">
-          <q-btn
-            flat
-            label="Fermer"
-            color="grey-7"
-            @click="showAuthDialog = false"
-          />
-        </div>
-      </div>
-    </q-dialog>
 
     <!-- Dialog de confirmation de déconnexion -->
     <q-dialog v-model="showLogoutDialog">
@@ -183,12 +195,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import type { User } from 'firebase/auth';
 import { useAuth } from 'stores/auth.store';
-import FirebaseAuthComponent from 'src/components/FirebaseAuthComponent.vue';
+import EssentialLink from 'components/EssentialLink.vue';
+
+const linksList = [
+  {
+    title: 'Docs',
+    caption: 'quasar.dev',
+    icon: 'school',
+    link: 'https://quasar.dev'
+  },
+  {
+    title: 'Github',
+    caption: 'github.com/quasarframework',
+    icon: 'code',
+    link: 'https://github.com/quasarframework'
+  },
+  {
+    title: 'Discord Chat Channel',
+    caption: 'chat.quasar.dev',
+    icon: 'chat',
+    link: 'https://chat.quasar.dev'
+  },
+  {
+    title: 'Forum',
+    caption: 'forum.quasar.dev',
+    icon: 'record_voice_over',
+    link: 'https://forum.quasar.dev'
+  },
+  {
+    title: 'Twitter',
+    caption: '@quasarframework',
+    icon: 'rss_feed',
+    link: 'https://twitter.quasar.dev'
+  },
+  {
+    title: 'Facebook',
+    caption: '@QuasarFramework',
+    icon: 'public',
+    link: 'https://facebook.quasar.dev'
+  },
+  {
+    title: 'Quasar Awesome',
+    caption: 'Community Quasar projects',
+    icon: 'favorite',
+    link: 'https://awesome.quasar.dev'
+  }
+];
 
 // Composables
 const route = useRoute();
@@ -200,15 +256,16 @@ const {
   user,
   isAuthenticated,
   userProfile,
-  logout,
-  initializeAuth
+  logout
 } = useAuth();
 
 // État local
+const leftDrawerOpen = ref(false);
 const activeTab = ref('index');
-const showAuthDialog = ref(false);
 const showLogoutDialog = ref(false);
 const loggingOut = ref(false);
+const essentialLinks = ref(linksList);
+const devMode = ref(false);
 
 // Computed
 const displayName = computed(() => {
@@ -216,49 +273,22 @@ const displayName = computed(() => {
 });
 
 // Méthodes
+const toggleLeftDrawer = () => {
+  leftDrawerOpen.value = !leftDrawerOpen.value;
+};
+
 const updateActiveTab = () => {
   const path = route.path;
 
-  if (path === '/' || path === '/index') {
+  if (path.includes('/index')) {
     activeTab.value = 'index';
-  } else if (path === '/user') {
+  } else if (path.includes('/user')) {
     activeTab.value = 'user';
-  } else if (path === '/firebase') {
+  } else if (path.includes('/firebase')) {
     activeTab.value = 'firebase';
-  } else if (path === '/error') {
+  } else if (path.includes('/error')) {
     activeTab.value = 'error';
   }
-};
-
-const handleAuthSuccess = (authUser: User) => {
-  console.log('✅ Connexion réussie dans MainLayout:', authUser.email);
-
-  showAuthDialog.value = false;
-
-  $q.notify({
-    type: 'positive',
-    message: `Bienvenue ${authUser.displayName || authUser.email} !`,
-    position: 'top',
-    timeout: 3000,
-    actions: [{ icon: 'close', color: 'white' }]
-  });
-
-  // Rediriger vers le profil si c'est la première connexion
-  if (route.path === '/' || route.path === '/index') {
-    router.push('/user');
-  }
-};
-
-const handleAuthError = (error: string) => {
-  console.error('❌ Erreur d\'authentification dans MainLayout:', error);
-
-  $q.notify({
-    type: 'negative',
-    message: `Erreur de connexion: ${error}`,
-    position: 'top',
-    timeout: 5000,
-    actions: [{ icon: 'close', color: 'white' }]
-  });
 };
 
 const handleLogout = () => {
@@ -279,10 +309,8 @@ const confirmLogout = async () => {
       timeout: 2000
     });
 
-    // Rediriger vers l'accueil si on était sur une page protégée
-    if (route.path === '/user') {
-      router.push('/index');
-    }
+    // Rediriger vers la page d'authentification
+    router.push('/auth');
   } catch (error) {
     console.error('❌ Erreur de déconnexion:', error);
 
@@ -298,7 +326,7 @@ const confirmLogout = async () => {
 };
 
 const goToProfile = () => {
-  router.push('/user');
+  router.push('/app/user');
 };
 
 const goToSettings = () => {
@@ -314,12 +342,11 @@ const goToSettings = () => {
 // Watchers
 watch(() => route.path, updateActiveTab);
 
-// Initialisation
-updateActiveTab();
-
-// Initialiser l'authentification au démarrage
-initializeAuth().catch(error => {
-  console.error('❌ Erreur d\'initialisation de l\'auth:', error);
+// Lifecycle
+onMounted(() => {
+  updateActiveTab();
+  // Vérifier si le mode dev est activé
+  devMode.value = localStorage.getItem('DEV_MODE_AUTH') === 'true';
 });
 </script>
 
@@ -353,7 +380,11 @@ initializeAuth().catch(error => {
   }
 
   .q-chip {
-    display: none; /* Masquer la version Quasar sur mobile */
+    font-size: 0.7rem;
   }
+}
+
+.user-menu {
+  min-width: 200px;
 }
 </style>

@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import type { User } from 'firebase/auth';
@@ -108,6 +108,7 @@ const emit = defineEmits<{
 }>();
 
 // Utilisation du store d'authentification
+const authStore = useAuth();
 const {
   user,
   loading,
@@ -115,7 +116,7 @@ const {
   userProfile,
   initializeAuth,
   hasRole
-} = useAuth();
+} = authStore;
 
 // État local
 const accessGranted = ref(true);
@@ -156,8 +157,8 @@ const checkAccess = async () => {
   accessGranted.value = true;
 };
 
-const handleAuthSuccess = async (user: User) => {
-  console.log('✅ Authentification réussie dans AuthGuard:', user.email);
+const handleAuthSuccess = async (authUser: User) => {
+  console.log('✅ Authentification réussie dans AuthGuard:', authUser.email);
 
   // Vérifier l'accès après authentification
   await checkAccess();
@@ -174,13 +175,13 @@ const handleAuthSuccess = async (user: User) => {
   // Notification de succès
   $q.notify({
     type: 'positive',
-    message: `Bienvenue ${user.displayName || user.email} !`,
+    message: `Bienvenue ${authUser.displayName || authUser.email} !`,
     position: 'top',
     timeout: 3000,
     actions: [{ icon: 'close', color: 'white' }]
   });
 
-  emit('authSuccess', user);
+  emit('authSuccess', authUser);
 };
 
 const handleAuthError = (error: string) => {
@@ -188,7 +189,7 @@ const handleAuthError = (error: string) => {
 
   $q.notify({
     type: 'negative',
-    message: `Erreur d'authentification: ${error}`,
+    message: `Erreur de connexion: ${error}`,
     position: 'top',
     timeout: 5000,
     actions: [{ icon: 'close', color: 'white' }]
@@ -199,18 +200,13 @@ const handleAuthError = (error: string) => {
 
 // Lifecycle
 onMounted(async () => {
-  try {
-    await initializeAuth();
-    await checkAccess();
-  } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation:', error);
-    $q.notify({
-      type: 'negative',
-      message: 'Erreur lors de l\'initialisation de l\'authentification',
-      position: 'top',
-      timeout: 5000
-    });
+  // Initialiser l'authentification si nécessaire
+  if (!authStore.initialized) {
+    initializeAuth();
   }
+
+  // Vérifier l'accès
+  await checkAccess();
 });
 </script>
 
@@ -219,13 +215,26 @@ onMounted(async () => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  right: 0;
+  bottom: 0;
   display: flex;
-  justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.9);
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
   z-index: 9999;
+}
+
+.access-denied {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.access-denied-card {
+  max-width: 400px;
+  width: 100%;
 }
 
 .auth-required {
@@ -234,24 +243,24 @@ onMounted(async () => {
 
 .auth-container {
   width: 100%;
-  max-width: 500px;
+  max-width: 450px;
   padding: 1rem;
 }
 
 .access-message-card {
-  max-width: 100%;
+  border: 2px solid #1976d2;
+  background: rgba(25, 118, 210, 0.05);
 }
 
-.access-denied {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
-}
+/* Dark mode adjustments */
+.body--dark {
+  .full-screen-loading {
+    background: rgba(18, 18, 18, 0.95);
+  }
 
-.access-denied-card {
-  max-width: 400px;
-  width: 100%;
+  .access-message-card {
+    background: rgba(25, 118, 210, 0.1);
+    border-color: #42a5f5;
+  }
 }
 </style>

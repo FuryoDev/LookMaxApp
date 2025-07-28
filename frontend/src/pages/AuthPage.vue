@@ -4,11 +4,11 @@
     <div class="auth-container">
       <!-- Header de la page -->
       <div class="auth-page-header text-center q-mb-xl">
-        <q-icon name="security" size="4em" color="primary" />
-        <div class="text-h3 text-weight-bold q-mt-md">
+        <q-icon name="security" size="4em" color="white" />
+        <div class="text-h3 text-weight-bold q-mt-md text-white">
           Bienvenue sur LookMax
         </div>
-        <div class="text-h6 text-grey-7 q-mt-sm">
+        <div class="text-h6 text-grey-3 q-mt-sm">
           Connectez-vous pour accéder à toutes les fonctionnalités
         </div>
       </div>
@@ -19,6 +19,34 @@
           @auth-success="handleAuthSuccess"
           @auth-error="handleAuthError"
         />
+      </div>
+
+      <!-- Mode développeur -->
+      <div class="dev-mode-section q-mt-xl text-center">
+        <q-card class="dev-mode-card" flat bordered>
+          <q-card-section>
+            <div class="text-h6 q-mb-md">🛠️ Mode Développeur</div>
+            <div class="text-body2 text-grey-7 q-mb-md">
+              Activer pour contourner l'authentification (développement uniquement)
+            </div>
+            <q-toggle
+              v-model="devMode"
+              @update:model-value="toggleDevMode"
+              label="Mode développeur"
+              color="orange"
+              icon="code"
+            />
+            <div v-if="devMode" class="q-mt-md">
+              <q-btn
+                @click="skipAuth"
+                color="orange"
+                label="Continuer sans authentification"
+                icon="arrow_forward"
+                no-caps
+              />
+            </div>
+          </q-card-section>
+        </q-card>
       </div>
 
       <!-- Fonctionnalités après connexion -->
@@ -107,15 +135,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import type { User } from 'firebase/auth';
-import FirebaseAuthComponent from 'src/components/FirebaseAuthComponent.vue';
+import FirebaseAuthComponent from 'components/FirebaseAuthComponent.vue';
 
 // Composables
 const router = useRouter();
 const $q = useQuasar();
+
+// État
+const devMode = ref(false);
 
 // Données
 const techStack = ref([
@@ -149,7 +180,7 @@ const handleAuthSuccess = (user: User) => {
   // Redirection après un court délai
   setTimeout(() => {
     $q.loading.hide();
-    router.push('/user'); // Rediriger vers le profil utilisateur
+    router.push('/app/user'); // Rediriger vers le profil utilisateur
   }, 1500);
 };
 
@@ -164,6 +195,47 @@ const handleAuthError = (error: string) => {
     actions: [{ icon: 'close', color: 'white' }]
   });
 };
+
+const toggleDevMode = (value: boolean) => {
+  localStorage.setItem('DEV_MODE_AUTH', value.toString());
+
+  if (value) {
+    $q.notify({
+      type: 'warning',
+      message: '⚠️ Mode développeur activé - Authentification désactivée',
+      position: 'top',
+      timeout: 5000
+    });
+  } else {
+    $q.notify({
+      type: 'info',
+      message: 'Mode développeur désactivé',
+      position: 'top',
+      timeout: 2000
+    });
+  }
+};
+
+const skipAuth = () => {
+  if (devMode.value) {
+    $q.loading.show({
+      message: 'Connexion en mode développeur...',
+      spinner: $q.iconSet.type.positive,
+      spinnerColor: 'orange'
+    });
+
+    setTimeout(async () => {
+      $q.loading.hide();
+      await router.push('/app');
+    }, 1000);
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  // Vérifier si le mode dev est activé
+  devMode.value = localStorage.getItem('DEV_MODE_AUTH') === 'true';
+});
 </script>
 
 <style lang="scss" scoped>
@@ -174,6 +246,7 @@ const handleAuthError = (error: string) => {
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
+  overflow-y: auto;
 }
 
 .auth-container {
@@ -189,6 +262,12 @@ const handleAuthError = (error: string) => {
 .auth-form-container {
   display: flex;
   justify-content: center;
+}
+
+.dev-mode-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 2px dashed #ff9800;
 }
 
 .features-card {
@@ -240,7 +319,8 @@ const handleAuthError = (error: string) => {
   }
 
   .features-card,
-  .tech-info-card {
+  .tech-info-card,
+  .dev-mode-card {
     margin-top: 1rem !important;
   }
 }
